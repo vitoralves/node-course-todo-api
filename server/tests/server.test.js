@@ -63,7 +63,7 @@ describe('POST /todos', () => {
 });
 
 describe('GET /todos', () => {
-    it ('should get all todos', (done) => {
+    it('should get all todos', (done) => {
         request(app)
             .get('/todos')
             .expect(200)
@@ -99,4 +99,40 @@ describe('GET /todos/:id', () => {
             })
             .end(done);
     })
-})
+});
+
+describe('DELETE /todos/:id', () => {
+    it('should delete a todo', (done) => {
+        request(app)
+            .delete(`/todos/${id.toHexString()}`)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo._id).toBe(id.toHexString());
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                Todo.findById(id.toHexString()).then((res) => {
+                    expect(res).toBeNull();
+                    done();
+                }).catch((e) => done(e));
+            });
+    });
+
+    it('should return 400, invalid id', (done) => {
+        request(app)
+            .delete('/todos/addsaasssda')
+            .expect(400)
+            .end(done);
+    });
+
+    it('should return 404 to inexistent id', (done) => {
+        let deleteID = new ObjectID().toHexString();
+        request(app)
+            .delete(`/todos/${deleteID}`)
+            .expect(404)
+            .end(done);
+    });
+});
