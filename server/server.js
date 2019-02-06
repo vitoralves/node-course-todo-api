@@ -1,7 +1,9 @@
+require('./config/config');
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const _ = require('lodash');
-const {mongoose} = require('./db/mongoose');
+const { mongoose } = require('./db/mongoose');
 const { ObjectID } = require('mongodb');
 
 var { Todo } = require('./models/todo');
@@ -42,7 +44,7 @@ app.get('/todos/:id', (req, res) => {
             res.send({ todo });
         }, (e) => res.status(400).send(e));
     } else {
-        res.status(400).send({message: 'Invalid ID number'});
+        res.status(400).send({ message: 'Invalid ID number' });
     }
 })
 
@@ -56,7 +58,7 @@ app.delete('/todos/:id', (req, res) => {
             res.send({ todo });
         }, (e) => res.status(400).send(e));
     } else {
-        res.status(400).send({message: 'Invalid ID number'});
+        res.status(400).send({ message: 'Invalid ID number' });
     }
 });
 
@@ -75,12 +77,12 @@ app.patch('/todos/:id', (req, res) => {
         body.completedAt = null;
     }
 
-    Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+    Todo.findByIdAndUpdate(id, { $set: body }, { new: true }).then((todo) => {
         if (!todo) {
-            return res.status(400).send({message: 'Todo not found'});
+            return res.status(400).send({ message: 'Todo not found' });
         }
 
-        res.send({todo});
+        res.send({ todo });
     }).catch((e) => res.status(400).send());
 });
 
