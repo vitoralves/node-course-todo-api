@@ -3,25 +3,12 @@ const request = require('supertest');
 
 const { app } = require('./../server');
 const { Todo } = require('./../models/todo');
+const { User } = require('./../models/user');
 const { ObjectID } = require('mongodb');
+const { todos, populateTodos, users, populateUsers } = require('./seed/seed');
 
-let id = new ObjectID();
-
-const todos = [{
-    _id: id,
-    text: 'First test todo'
-}, {
-    _id: new ObjectID(),
-    text: 'Second test todo',
-    completed: true,
-    completedAt: 12312312
-}];
-
-beforeEach((done) => {
-    Todo.remove({}).then(() => {
-        return Todo.insertMany(todos);
-    }).then(() => done());
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('POST /todos', () => {
     it('should create a new todo', (done) => {
@@ -95,10 +82,10 @@ describe('GET /todos/:id', () => {
 
     it('should return todo object', (done) => {
         request(app)
-            .get(`/todos/${id.toHexString()}`)
+            .get(`/todos/${todos[0]._id.toHexString()}`)
             .expect(200)
             .expect((res) => {
-                expect(res.body.todo._id).toBe(id.toHexString());
+                expect(res.body.todo._id).toBe(todos[0]._id.toHexString());
             })
             .end(done);
     })
@@ -107,17 +94,17 @@ describe('GET /todos/:id', () => {
 describe('DELETE /todos/:id', () => {
     it('should delete a todo', (done) => {
         request(app)
-            .delete(`/todos/${id.toHexString()}`)
+            .delete(`/todos/${todos[0]._id.toHexString()}`)
             .expect(200)
             .expect((res) => {
-                expect(res.body.todo._id).toBe(id.toHexString());
+                expect(res.body.todo._id).toBe(todos[0]._id.toHexString());
             })
             .end((err, res) => {
                 if (err) {
                     return done(err);
                 }
 
-                Todo.findById(id.toHexString()).then((res) => {
+                Todo.findById(todos[0]._id.toHexString()).then((res) => {
                     expect(res).toBeNull();
                     done();
                 }).catch((e) => done(e));
@@ -168,7 +155,7 @@ describe('PATCH /todo/:id', () => {
             text: 'new',
             completed: false
         }
-        
+
         request(app)
             .patch(`/todos/${todos[1]._id}`)
             .send(todo)
@@ -184,4 +171,88 @@ describe('PATCH /todo/:id', () => {
                 done();
             })
     });
-})
+});
+
+describe('GET /users/me', () => {
+    it('should return user if autheticated', (done) => {
+        request(app)
+            .get('/users/me')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+                expect(res.body._id).toBe(users[0]._id.toHexString());
+                expect(res.body.email).toBe(users[0].email);
+
+                done();
+            })
+    });
+
+    it('should return 401 if not autheticated', (done) => {
+        request(app)
+            .get('/users/me')
+            .expect(401)
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+                expect(res.body).toEqual({});
+                done();
+            });
+    });
+});
+
+describe('POST /users', () => {
+    it('should create a user', (done) => {
+        var email = 'test@test.com';
+        var password = '123abc';
+
+        request(app)
+            .post('/users')
+            .send({ email, password })
+            .expect(200)
+            .expect((res) => {
+                expect(res.headers['x-auth']).toBeTruthy();
+                expect(res.body._id).toBeTruthy();
+                expect(res.body.email).toBe(email);
+            })
+            .end((err) => {
+                if (err) {
+                    return done(err);
+                }
+
+                User.findOne({ email }).then((user) => {
+                    expect(user).toBeTruthy();
+                    expect(user.password).not.toBe(password);
+                    done();
+                })
+            });
+    });
+
+    it('should return validation errors if request invalid', (done) => {
+        var email = 'test.com';
+        var password = '123abc';
+
+        request(app)
+            .post('/users')
+            .send({ email, password })
+            .expect(400)
+            .end((err, res) => {
+                expect(res.body.errors).toBeTruthy();
+                done();
+            });
+    });
+
+    it('should not create user if email in user', (done) => {
+        let email = users[0].email;
+        let password = users[0].password;
+
+        request(app)
+            .post('/users')
+            .send({ email, password })
+            .expect(400)
+            .end(done);
+    });
+});
