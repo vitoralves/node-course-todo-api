@@ -6,7 +6,7 @@ var Todo = mongoose.model('Todo', {
         required: true,
         minlength: 1,
         trim: true
-    } ,
+    },
     completed: {
         type: Boolean,
         default: false
@@ -14,7 +14,11 @@ var Todo = mongoose.model('Todo', {
     completedAt: {
         type: Number,
         defautl: null
+    },
+    _creator: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true
     }
 });
 
-module.exports = {Todo};
+module.exports = { Todo };
