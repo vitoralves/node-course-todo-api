@@ -4,7 +4,7 @@
   "description": "project to estuding how to do node api's with mongo db",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon node server/server.js",
+    "start": "node server/server.js",
     "test": "export NODE_ENV=test || SET \"NODE_ENV=test\" && mocha server/**/*.test.js",
     "test-watch": "nodemon --exec \"npm test\""
   },
