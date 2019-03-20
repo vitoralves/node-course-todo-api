@@ -46,24 +46,24 @@ router.get('/todos/:id', authenticate, (req, res) => {
     }
 })
 
-router.delete('/todos/:id', authenticate, (req, res) => {
+router.delete('/todos/:id', authenticate, async (req, res) => {
     let id = req.params.id;
     if (ObjectID.isValid(id)) {
-        Todo.findOne({
-            _id: id,
-            _creator: req.user.id
-        }).then((todo) => {
+        try {
+            const todo = await Todo.findOneAndDelete({ _id: id, _creator: req.user.id });
             if (!todo) {
                 return res.status(404).send();
             }
             res.send({ todo });
-        }, (e) => res.status(400).send(e));
+        } catch (e) {
+            res.status(500).send(e);
+        }
     } else {
         res.status(400).send({ message: 'Invalid ID number' });
     }
 });
 
-router.patch('/todos/:id', authenticate, (req, res) => {
+router.patch('/todos/:id', authenticate, async (req, res) => {
     var id = req.params.id;
     var body = _.pick(req.body, ['text', 'completed']);
 
@@ -78,13 +78,15 @@ router.patch('/todos/:id', authenticate, (req, res) => {
         body.completedAt = null;
     }
 
-    Todo.findOneAndUpdate({ _id: id, _creator: req.user._id }, { $set: body }, { new: true }).then((todo) => {
+    try {
+        const todo = await Todo.findOneAndUpdate({ _id: id, _creator: req.user.id }, { $set: body }, { new: true });
         if (!todo) {
-            return res.status(400).send({ message: 'Todo not found' });
+            return res.status(404).send({ message: 'Todo not found' });
         }
-
         res.send({ todo });
-    }).catch((e) => res.status(400).send());
+    } catch (e) {
+        res.status(500).send(e);
+    }
 });
 
 module.exports = router
