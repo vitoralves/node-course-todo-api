@@ -17,6 +17,11 @@ router.post('/users', (req, res) => {
     }, (e) => res.status(400).send(e));
 });
 
+router.get('/users', authenticate, async (req, res) => {
+    const users = await User.find({})
+    res.send({ users });
+});
+
 router.get('/users/me', authenticate, (req, res) => {
     res.send(req.user);
 });

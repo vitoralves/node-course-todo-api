@@ -112,7 +112,6 @@ describe('DELETE /todos/:id', () => {
             .set('x-auth', users[1].tokens[0].token)
             .expect(200)
             .expect((res) => {
-                console.log(res.body.todo)
                 expect(res.body.todo._id).toBe(todos[1]._id.toHexString());
             })
             .end((err, res) => {
@@ -223,6 +222,23 @@ describe('PATCH /todo/:id', () => {
             })
     });
 });
+
+describe('GET /users/', () => {
+    it('should get all users if authenticated ', (done) => {
+        request(app)
+            .get('/users')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                expect(res.body.users.length).toBe(2);
+                done();
+            })
+    })
+})
 
 describe('GET /users/me', () => {
     it('should return user if autheticated', (done) => {
